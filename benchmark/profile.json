@@ -1,0 +1,25 @@
+{
+  "id": "mobile-cold-v1",
+  "nodeVersion": "24.19.0",
+  "yarnVersion": "1.22.22",
+  "playwrightVersion": "1.63.0",
+  "chromeVersion": "153.0.8010.12",
+  "chromeRevision": "1243",
+  "viewport": { "width": 390, "height": 844, "deviceScaleFactor": 1 },
+  "locale": "en-US",
+  "timezoneId": "UTC",
+  "headless": true,
+  "cpuRate": 4,
+  "network": {
+    "offline": false,
+    "latency": 150,
+    "downloadThroughput": 200000,
+    "uploadThroughput": 75000
+  },
+  "cacheState": "fresh-context-cache-disabled",
+  "serviceWorkers": "block",
+  "seed": 20260911,
+  "recordCount": 5000,
+  "measuredIterations": 5,
+  "warmupIterations": 0
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "replace-with-investigation-id",
+  "experimentId": "replace-with-experiment-id",
+  "status": "draft",
+  "question": "",
+  "aiHypothesis": "",
+  "evidenceInspected": [],
+  "sourceLocations": [],
+  "decision": "pending",
+  "decisionSummary": "",
+  "reasoning": "",
+  "relatedDiff": {
+    "status": "not-available",
+    "reason": "No change recorded yet."
+  },
+  "measurements": {
+    "before": {
+      "status": "not-available",
+      "reason": "No before measurement linked yet."
+    },
+    "after": {
+      "status": "not-available",
+      "reason": "No after measurement linked yet."
+    },
+    "conditions": {
+      "status": "not-available",
+      "reason": "Measurement conditions not recorded yet."
+    }
+  },
+  "verification": null
+}

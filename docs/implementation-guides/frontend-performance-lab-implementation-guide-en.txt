@@ -1,0 +1,208 @@
+FRONTEND PERFORMANCE LAB
+IMPLEMENTATION GUIDE FROM STEP 1 THROUGH STEP 32
+
+PURPOSE
+
+The project builds a Live Market Explorer with /baseline and /optimized routes. Both routes must provide the same UI, data and functionality; only their implementations differ. Every performance conclusion must be measured under fixed conditions and traceable to real evidence.
+
+SHARED CONFIGURATION
+
+- Next.js, React and strict TypeScript.
+- Yarn Classic 1.22.22 with yarn.lock.
+- Default dataset: 5,000 records using seed 20260911.
+- Routes: /baseline, /optimized and /case-study.
+- Official benchmark result: median of five valid runs.
+- Never label TBT or synthetic interaction timing as field INP.
+- Never manually enter benchmark values or publish unsupported claims.
+
+PHASE 1 — FOUNDATION
+
+STEP 1 — SCAFFOLD THE PROJECT
+Goal: establish a stable development and validation foundation.
+Work: configure Next.js, React, strict TypeScript, Yarn Classic 1.22.22, ESLint, Prettier, Vitest and Playwright; add placeholders for all three routes and scripts for development, build, lint, type checking and tests.
+Done when: yarn.lock is the only package-manager lockfile, all routes open, and lint, typecheck, tests and production build pass.
+
+STEP 2 — ESTABLISH DOCUMENTATION
+Goal: lock the scope and rules before implementations diverge.
+Work: create project scope, architecture, benchmark protocol and evidence policy documents covering invariants, non-goals, metric definitions, benchmark conditions and evidence rules.
+Done when: the documents are consistent, use Yarn commands and let another developer understand how comparisons remain fair.
+
+STEP 3 — DETERMINISTIC DATA
+Goal: ensure every run and both routes receive identical input.
+Work: define MarketRecord and a seeded generator with configurable count; identical seed/count must produce identical output; test determinism, unique IDs and valid ranges.
+Done when: seed 20260911 reliably produces the same 5,000 records and the generator is UI-independent.
+
+STEP 4 — MOCK API
+Goal: provide a controlled data source for UI and network experiments.
+Work: implement collection, detail and summary endpoints with validated seed, count, delay and controlled-error options; reuse the generator and add contract tests.
+Done when: API behavior is deterministic, status codes are correct, tests pass and no deliberate network problem exists yet.
+
+PHASE 2 — SHARED PRODUCT
+
+STEP 5 — SHARED PRESENTATION COMPONENTS
+Goal: keep both routes visually identical.
+Work: build the shell, toolbar, search, filters, table header, row, cards, skeleton, empty/error states and drawer; separate presentation from processing logic; reserve dimensions and support basic keyboard use.
+Done when: components are typed, responsive, testable and contain no implementation-specific optimization.
+
+STEP 6 — BEHAVIORAL CONTRACT
+Goal: define exactly what “same functionality” means.
+Work: specify search, filtering, sorting, expansion, drawer, refresh, loading, empty, error and keyboard semantics; create pure functions, stable selectors and reusable journey helpers.
+Done when: unit tests describe output and ordering, and the contract can test both routes.
+
+STEP 7 — REFERENCE DASHBOARD
+Goal: build a correct product before introducing inefficiency or optimization.
+Work: connect the API, render the dashboard and implement interactions, chart, refresh and responsive behavior.
+Done when: the complete user journey works without artificial bottlenecks or leaks.
+
+STEP 8 — ROUTE WIRING AND PARITY
+Goal: create separate entry points and prove equivalent behavior.
+Work: wire /baseline and /optimized; add a parameterized Playwright suite comparing data, search, filters, sorting, details, states and important accessibility behavior.
+Done when: parity passes with the same seed before implementation differences are introduced.
+
+PHASE 3 — EXPERIMENT SYSTEM
+
+STEP 9 — EXPERIMENT RECORD SCHEMA
+Goal: store results in an auditable structure.
+Work: define experiments, approaches, environments, artifacts, measured values, missing results and runs; require unit, sample count, aggregation and evidence path; add runtime validation.
+Done when: invalid records fail, missing data is explicitly unavailable and no result is fabricated.
+
+STEP 10 — SCENARIO CONFIGURATION
+Goal: activate isolated, reproducible experiments through the URL.
+Work: support default, large-list, search-input, worker-aggregation and three memory-leak scenarios; validate scenario, seed and count without global mutable flags.
+Done when: both routes resolve the same configuration and invalid queries behave predictably.
+
+STEP 11 — EVIDENCE SCAFFOLDING
+Goal: standardize every run’s artifacts.
+Work: generate run directories for prompt, output, diff, tests, environment, raw results, human evaluation and optional traces/heaps/screenshots; validate files and safe references.
+Done when: valid fixtures pass, missing evidence fails and scripts never generate fake measurements.
+
+PHASE 4 — RENDERING AND INTERACTION EXPERIMENTS
+
+STEP 12 — BASELINE LARGE LIST
+Goal: establish full rendering of 5,000 rows as the baseline.
+Work: render the complete dataset only in the large-list scenario; add stable markers for row and DOM counts; introduce no unrelated problem.
+Done when: tests confirm all rows, behavior remains correct and the production build passes.
+
+STEP 13 — OPTIMIZED VIRTUALIZATION
+Goal: reduce DOM work by rendering only the visible window.
+Work: add virtualization with documented overscan while preserving scrolling, keyboard behavior, identity, filtering, sorting and details.
+Done when: parity passes and tests prove the rendered row count is bounded; no result is claimed before measurement.
+
+STEP 14 — SEARCH INPUT
+Goal: compare per-keystroke work with debouncing and cancellation.
+Work: baseline processes every keystroke; optimized debounces, aborts obsolete requests and rejects stale results; instrument request and calculation counts.
+Done when: rapid-typing tests pass and both routes produce the same final result.
+
+STEP 15 — WEB WORKER AGGREGATION
+Goal: protect the main thread during CPU-heavy aggregation.
+Work: baseline runs the pure aggregation on the main thread; optimized runs identical logic in a Worker, versions jobs, discards obsolete results and terminates on cleanup.
+Done when: outputs match, lifecycle tests pass and no speed claim is made without benchmark evidence.
+
+STEP 16 — RENDER BOUNDARIES
+Goal: reduce unnecessary React renders.
+Work: baseline reproduces overly high state and unstable props; optimized localizes state, stabilizes props and memoizes only justified boundaries; add render counters or Profiler marks.
+Done when: behavior matches and the selected interaction no longer renders unrelated subtrees.
+
+STEP 17 — REQUEST LIFECYCLE
+Goal: preserve async correctness and avoid redundant network work.
+Work: baseline reproduces duplicates, missing cancellation and a stale race; optimized deduplicates in-flight requests, aborts, versions responses and uses a bounded TTL/LRU cache.
+Done when: deterministic race tests prove the latest state wins and the cache cannot grow without limit.
+
+PHASE 5 — DELIVERY EXPERIMENTS
+
+STEP 18 — BUNDLE LOADING
+Goal: defer JavaScript that is not initially needed.
+Work: baseline statically imports the chart; optimized dynamically imports the same chart when the drawer opens; add a stable skeleton, error state and machine-readable bundle report.
+Done when: network/build evidence proves the chart is absent from optimized initial loading and functional parity passes.
+
+STEP 19 — IMAGES AND FONTS
+Goal: reduce transfers, LCP delay and asset-driven layout shifts.
+Work: preferably separate image-delivery and font-loading scenarios; baseline uses oversized/eager images, missing reserved space and a poor font strategy; optimized uses responsive formats, correct lazy loading, LCP priority, fixed dimensions and stable self-hosted fonts.
+Done when: final visuals match, asset tests pass and LCP/CLS values come only from verified runs.
+
+PHASE 6 — MEMORY EXPERIMENTS
+
+STEP 20 — INTERVAL LEAK
+Goal: demonstrate retained work caused by an uncleared timer.
+Work: baseline leaves an interval alive after unmount; optimized clears it and avoids stale closures; add repeated mount/unmount fake-timer tests.
+Done when: the leak is scenario-only, tests distinguish both implementations and DevTools reproduction is documented.
+
+STEP 21 — EVENT-LISTENER LEAK
+Goal: demonstrate listener accumulation across navigation.
+Work: baseline fails to remove a listener and retains component data; optimized uses a stable handler and removes the exact reference; instrument handler counts.
+Done when: repeated-cycle tests show baseline accumulation and optimized stability.
+
+STEP 22 — DETACHED-DOM LEAK
+Goal: demonstrate removed DOM nodes retained through references.
+Work: baseline retains drawer nodes in a closure/cache; optimized stores IDs/data and clears or bounds retained state; support Detached Elements and Heap Snapshot inspection.
+Done when: the leak is controlled and isolated, and jsdom is not the sole browser-memory evidence.
+
+STEP 23 — COMBINED MEMORY JOURNEY
+Goal: measure memory trends after repeated navigation.
+Work: automate Dashboard → Detail → Dashboard ten times; after cleanup and forced GC in a benchmark browser, record heap, DOM nodes and supported detached signals while preserving every cycle and failure.
+Done when: conditions match across routes, raw JSON is complete and orchestration dry-run passes.
+
+PHASE 7 — BENCHMARK PLATFORM
+
+STEP 24 — LOCK THE ENVIRONMENT
+Goal: make results comparable across runs.
+Work: pin Node, Yarn and Chrome; fix viewport 390x844, CPU/network profile, seed, count, cache state and iterations; create an environment schema and preflight command.
+Done when: critical mismatches fail preflight and artifacts record commit SHA, OS, browser and tool versions.
+
+STEP 25 — BENCHMARK RUNNER
+Goal: automate experiment execution and aggregation.
+Work: run a production build, apply the warm-up policy, execute five measured runs, preserve raw results and failures, calculate the median and create unique evidence directories; support baseline, optimized and comparison commands.
+Done when: the runner never chooses the best run, silently drops outliers or overwrites data, and dry-run/tests pass.
+
+STEP 26 — LIGHTHOUSE COLLECTION
+Goal: collect consistent lab web-performance metrics.
+Work: preserve each iteration’s report for LCP, CLS, TBT, Speed Index, transfer and JS execution; use identical configuration/cache conditions and aggregate by median.
+Done when: parsing is tested, original reports remain available and field INP stays unavailable without RUM.
+
+STEP 27 — REGRESSION BUDGETS
+Goal: detect when optimized behavior regresses.
+Work: define direction, units and tolerances for initial JS, long tasks, DOM nodes and search duration; reject missing or incompatible evidence; initially keep the command opt-in.
+Done when: tests cover improvement, regression, missing data and environment mismatch.
+
+PHASE 8 — PRESENT THE CASE STUDY
+
+STEP 28 — EVIDENCE-DRIVEN CASE STUDY
+Goal: turn verified run records into a visual case study.
+Work: make /case-study display purpose, approaches, environment, sample count, median, supported comparisons, evidence and limitations; render charts only for compatible data.
+Done when: no number is hard-coded, unavailable states are accurate, the page is responsive and accessible, and tests pass.
+
+STEP 29 — AI-ASSISTANCE RECORDS
+Goal: show that AI accelerates investigation while evidence drives human decisions.
+Work: record the question, hypothesis, inspected evidence, source, decision, accepted/rejected state, reasoning, diff and measurement references; disallow verified status without evidence.
+Done when: templates and workflow exist and the case study only displays real verified records.
+
+STEP 30 — SEO AND ACCESSIBILITY — DEFERRED
+Goal: preserve the current SEO baseline for a separate before/after experiment.
+Work: skip SEO implementation for now; keep basic accessibility smoke checks in CI and final verification.
+Done when: README marks SEO as deferred and missing SEO results remain unavailable.
+
+PHASE 9 — DELIVERY AND FINAL REVIEW
+
+STEP 31 — CI
+Goal: protect correctness on each merge request.
+Work: run frozen Yarn installation, lint, typecheck, unit tests, parity/E2E and build; reserve full benchmarks for manual/scheduled validated runners and preserve artifacts.
+Done when: the pipeline is reproducible, local reproduction is documented and invalid benchmark environments cannot publish claims.
+
+STEP 32 — FINAL VERIFICATION
+Goal: confirm the core project is ready to publish while SEO remains deferred.
+Work: audit git state, documents, scripts, routes, parity, experiments, evidence and case study; run all correctness checks and fix only clear in-scope defects. Do not implement SEO.
+Done when: every measurement has evidence, missing and SEO data remains unavailable, README documents the SEO deferral, build/tests pass and the readiness report lists passed checks, blockers, unverified metrics and the next action.
+
+RECOMMENDED REVIEW POINTS
+
+- After Step 5: review component and UI states.
+- After Step 7: review the complete dashboard for the first time.
+- After Step 13: review full rendering versus virtualization.
+- After Step 19: review asset-loading experience.
+- After Step 23: review memory evidence.
+- After Step 28: review the case study.
+- After Step 32: publish only verified claims.
+
+WORKING WITH CODEX
+
+For every step, ask Codex to inspect git status and relevant files before editing; preserve user changes; stay within scope; run lint, typecheck, relevant tests and the production build; report changed files, validation results and limitations; avoid commits unless requested; and never invent benchmark results.

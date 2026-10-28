@@ -1,0 +1,21 @@
+/** Stable observable hooks shared by presentation and browser journeys. */
+export const MARKET_SELECTORS = {
+  dashboard: 'market-dashboard',
+  search: 'market-search',
+  category: 'market-category',
+  status: 'market-status',
+  refresh: 'market-refresh',
+  table: 'market-table',
+  row: 'market-row',
+  loading: 'market-loading',
+  empty: 'market-empty',
+  error: 'market-error',
+  retry: 'market-retry',
+  summary: 'market-summary',
+  drawer: 'market-drawer',
+  close: 'market-close',
+  sort: (key: string) => `market-sort-${key}`,
+  expand: (id: string) => `market-expand-${id}`,
+  expanded: (id: string) => `market-expanded-${id}`,
+  detail: (id: string) => `market-detail-${id}`,
+} as const;

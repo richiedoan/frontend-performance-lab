@@ -1,0 +1,34 @@
+# Installed dependencies and package-manager caches
+node_modules/
+.yarn-cache/
+/.npm/
+
+# Build output and generated TypeScript files
+/.next/
+/out/
+/dist/
+*.tsbuildinfo
+/next-env.d.ts
+
+# Test reports and local benchmark/diagnostic output
+/coverage/
+/test-results/
+/playwright-report/
+/blob-report/
+/reports/
+/artifacts/
+
+# Generated publication snapshots (see docs/ci.md)
+/public/evidence/
+
+# Local environment and deployment state
+.env
+.env.*
+!.env.example
+!.env.*.example
+/.vercel/
+
+# Debug logs and operating-system files
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,208 @@
+FRONTEND PERFORMANCE LAB
+HƯỚNG DẪN TRIỂN KHAI TỪ BƯỚC 1 ĐẾN BƯỚC 32
+
+MỤC ĐÍCH
+
+Project xây một Live Market Explorer có hai route /baseline và /optimized. Hai route phải cùng giao diện, dữ liệu và chức năng, chỉ khác implementation. Mọi kết luận hiệu năng phải được đo trong điều kiện cố định và liên kết với evidence thật.
+
+CẤU HÌNH CHUNG
+
+- Next.js, React, TypeScript strict.
+- Yarn Classic 1.22.22 và yarn.lock.
+- Dataset mặc định: 5.000 records, seed 20260911.
+- Routes: /baseline, /optimized và /case-study.
+- Benchmark chính thức: 5 lần hợp lệ, báo cáo median.
+- Không gọi TBT hoặc synthetic interaction timing là field INP.
+- Không điền số benchmark bằng tay hoặc công bố claim thiếu evidence.
+
+PHASE 1 — NỀN TẢNG
+
+BƯỚC 1 — KHỞI TẠO PROJECT
+Mục tiêu: tạo nền kỹ thuật có thể phát triển và kiểm tra ổn định.
+Thực hiện: khởi tạo Next.js, React, TypeScript strict; cấu hình Yarn Classic 1.22.22, ESLint, Prettier, Vitest, Playwright; tạo placeholder cho ba route và các script dev, build, lint, typecheck, test, test:e2e, validate.
+Hoàn thành khi: yarn.lock là lockfile duy nhất; ba route mở được; lint, typecheck, test và production build pass.
+
+BƯỚC 2 — THIẾT LẬP TÀI LIỆU
+Mục tiêu: khóa phạm vi và nguyên tắc trước khi implementation phân nhánh.
+Thực hiện: tạo project-scope, architecture, benchmark-protocol và evidence-policy; ghi rõ invariants, non-goals, metric definitions, môi trường benchmark và quy tắc evidence.
+Hoàn thành khi: tài liệu không mâu thuẫn, dùng command Yarn và đủ để người khác hiểu cách so sánh công bằng.
+
+BƯỚC 3 — DỮ LIỆU DETERMINISTIC
+Mục tiêu: đảm bảo mọi lần chạy và cả hai route nhận cùng đầu vào.
+Thực hiện: định nghĩa MarketRecord và seeded generator hỗ trợ count tùy chỉnh; cùng seed/count phải tạo cùng output; viết test cho determinism, unique IDs và valid ranges.
+Hoàn thành khi: seed 20260911 luôn tạo đúng 5.000 records giống nhau và generator không phụ thuộc UI.
+
+BƯỚC 4 — MOCK API
+Mục tiêu: cung cấp nguồn dữ liệu có thể kiểm soát cho UI và network experiments.
+Thực hiện: tạo API collection, detail và summary; hỗ trợ seed, count, delay và controlled error với validation; dùng lại generator; viết contract tests.
+Hoàn thành khi: API deterministic, status code đúng, test pass và chưa chứa deliberate network problems.
+
+PHASE 2 — SẢN PHẨM DÙNG CHUNG
+
+BƯỚC 5 — SHARED PRESENTATION COMPONENTS
+Mục tiêu: bảo đảm hai route có cùng hình thức.
+Thực hiện: xây shell, toolbar, search, filters, table header, row, cards, skeleton, empty/error state và drawer; tách presentation khỏi data-processing logic; reserve dimensions và hỗ trợ keyboard cơ bản.
+Hoàn thành khi: components typed, responsive, test được và không chứa optimization riêng.
+
+BƯỚC 6 — BEHAVIORAL CONTRACT
+Mục tiêu: định nghĩa chính xác “cùng chức năng”.
+Thực hiện: chốt search, filter, sort, expand, drawer, refresh, loading, empty, error và keyboard semantics; tạo pure functions, stable selectors và journey helpers.
+Hoàn thành khi: unit tests mô tả đúng output/order và contract dùng được cho cả hai route.
+
+BƯỚC 7 — REFERENCE DASHBOARD
+Mục tiêu: có sản phẩm đúng chức năng trước khi cố tình làm chậm hoặc tối ưu.
+Thực hiện: kết nối API, render dashboard, thêm interactions, chart, refresh và responsive behavior.
+Hoàn thành khi: complete user journey chạy được và chưa có artificial bottleneck/leak.
+
+BƯỚC 8 — ROUTE WIRING VÀ PARITY
+Mục tiêu: tạo hai entry point riêng nhưng chứng minh chúng tương đương.
+Thực hiện: nối /baseline và /optimized; tạo parameterized Playwright suite so sánh data, search, filter, sort, detail, states và accessibility behavior.
+Hoàn thành khi: parity suite pass với cùng seed trước khi thêm khác biệt implementation.
+
+PHASE 3 — HỆ THỐNG EXPERIMENT
+
+BƯỚC 9 — EXPERIMENT RECORD SCHEMA
+Mục tiêu: lưu kết quả theo cấu trúc có thể kiểm chứng.
+Thực hiện: định nghĩa experiment, approach, environment, artifact, measured value, missing result và run; mỗi measurement có unit, sample count, aggregation và evidence path; thêm runtime validation.
+Hoàn thành khi: invalid record bị reject, missing data được ghi not-available và chưa có số liệu giả.
+
+BƯỚC 10 — SCENARIO CONFIGURATION
+Mục tiêu: bật từng experiment độc lập và tái lập qua URL.
+Thực hiện: hỗ trợ default, large-list, search-input, worker-aggregation và ba memory-leak scenarios; validate scenario, seed, count; không dùng global mutable flags.
+Hoàn thành khi: hai route resolve cùng config và invalid query được xử lý dự đoán được.
+
+BƯỚC 11 — EVIDENCE SCAFFOLDING
+Mục tiêu: chuẩn hóa artifact của mỗi run.
+Thực hiện: tạo script sinh run directory chứa prompt, output, diff, tests, environment, raw results, human evaluation và optional trace/heap/screenshot; validator kiểm tra file và đường dẫn.
+Hoàn thành khi: fixture hợp lệ pass, fixture thiếu evidence fail và script không tạo fake measurement.
+
+PHASE 4 — RENDERING VÀ INTERACTION EXPERIMENTS
+
+BƯỚC 12 — BASELINE LARGE LIST
+Mục tiêu: tạo baseline render toàn bộ 5.000 rows.
+Thực hiện: chỉ trong large-list scenario, render full dataset; thêm marker để đếm rows/DOM; không thêm lỗi khác.
+Hoàn thành khi: test xác nhận đủ rows, behavior vẫn đúng và production build pass.
+
+BƯỚC 13 — OPTIMIZED VIRTUALIZATION
+Mục tiêu: giảm DOM work bằng cách chỉ render vùng nhìn thấy.
+Thực hiện: dùng virtualization với overscan có document; giữ scroll, keyboard, stable identity, filter/sort và drawer.
+Hoàn thành khi: parity pass và test chứng minh DOM row count được giới hạn; chưa công bố số nếu chưa đo.
+
+BƯỚC 14 — SEARCH INPUT
+Mục tiêu: so sánh xử lý mỗi keystroke với debounce/cancellation.
+Thực hiện: baseline chạy search sau từng phím; optimized debounce, abort obsolete request và chặn stale result; instrument request/calculation count.
+Hoàn thành khi: rapid-typing tests pass và hai route cho cùng kết quả cuối.
+
+BƯỚC 15 — WEB WORKER AGGREGATION
+Mục tiêu: bảo vệ main thread khi chạy aggregation CPU-heavy.
+Thực hiện: baseline chạy pure aggregation trên main thread; optimized chạy cùng logic trong Worker, version jobs, bỏ obsolete result và terminate khi cleanup.
+Hoàn thành khi: outputs giống nhau, worker lifecycle được test và chưa tuyên bố nhanh hơn nếu thiếu benchmark.
+
+BƯỚC 16 — RENDER BOUNDARIES
+Mục tiêu: giảm unnecessary React renders.
+Thực hiện: baseline tái hiện state đặt quá cao và unstable props; optimized localize state, ổn định props và memoize boundary có evidence; thêm render counters/Profiler marks.
+Hoàn thành khi: behavior giống nhau và gefragt interaction không còn làm subtree không liên quan render lại.
+
+BƯỚC 17 — REQUEST LIFECYCLE
+Mục tiêu: bảo đảm async data đúng và tránh request thừa.
+Thực hiện: baseline có duplicate request, không cancellation và stale race; optimized deduplicate in-flight request, abort, version response và bounded TTL/LRU cache.
+Hoàn thành khi: deterministic race tests chứng minh optimized luôn áp dụng state mới nhất và cache không tăng vô hạn.
+
+PHASE 5 — DELIVERY EXPERIMENTS
+
+BƯỚC 18 — BUNDLE LOADING
+Mục tiêu: trì hoãn JavaScript chưa cần.
+Thực hiện: baseline static-import chart; optimized dynamic-import chart khi drawer mở; giữ chart/data giống nhau; thêm stable skeleton, error state và machine-readable bundle report.
+Hoàn thành khi: network/build evidence chứng minh optimized chưa tải chart lúc initial load và functional parity pass.
+
+BƯỚC 19 — IMAGE VÀ FONT
+Mục tiêu: giảm transfer, LCP delay và layout shift do assets.
+Thực hiện: nên tách image-delivery và font-loading sub-scenarios; baseline dùng oversized/eager images, thiếu reserved size và font strategy kém; optimized dùng responsive formats, lazy load đúng chỗ, ưu tiên LCP asset, dimensions cố định và self-hosted font ổn định.
+Hoàn thành khi: final visual giống nhau, asset tests pass và LCP/CLS chỉ được ghi từ verified run.
+
+PHASE 6 — MEMORY EXPERIMENTS
+
+BƯỚC 20 — INTERVAL LEAK
+Mục tiêu: chứng minh timer không cleanup gây retained work.
+Thực hiện: baseline để interval sống sau unmount; optimized clear interval và tránh stale closure; viết fake-timer mount/unmount tests.
+Hoàn thành khi: leak chỉ nằm trong scenario, test phân biệt rõ hai implementation và có hướng dẫn DevTools.
+
+BƯỚC 21 — EVENT LISTENER LEAK
+Mục tiêu: minh họa listener tích lũy qua navigation.
+Thực hiện: baseline không remove listener và giữ component data; optimized dùng stable handler và remove đúng reference; instrument handler count.
+Hoàn thành khi: repeated-cycle test thấy baseline tích lũy còn optimized ổn định.
+
+BƯỚC 22 — DETACHED DOM LEAK
+Mục tiêu: minh họa DOM đã xóa nhưng vẫn bị reference giữ lại.
+Thực hiện: baseline giữ drawer nodes trong closure/cache; optimized lưu ID/data và cleanup/bound cache; hỗ trợ Detached Elements/Heap Snapshot inspection.
+Hoàn thành khi: leak tái hiện có kiểm soát, không ảnh hưởng default route và không dùng jsdom làm evidence browser duy nhất.
+
+BƯỚC 23 — COMBINED MEMORY JOURNEY
+Mục tiêu: đo xu hướng memory sau navigation lặp lại.
+Thực hiện: tự động chạy Dashboard → Detail → Dashboard 10 lần; sau cleanup và forced GC trong benchmark browser, ghi heap, DOM nodes và detached signal; giữ mọi cycle/failure.
+Hoàn thành khi: baseline/optimized dùng cùng điều kiện, raw JSON đầy đủ và dry-run orchestration pass.
+
+PHASE 7 — BENCHMARK PLATFORM
+
+BƯỚC 24 — KHÓA MÔI TRƯỜNG
+Mục tiêu: làm kết quả giữa các run có thể so sánh.
+Thực hiện: pin Node, Yarn và Chrome; cố định viewport 390x844, CPU/network profile, seed, count, cache state, iterations; tạo environment schema và preflight.
+Hoàn thành khi: critical mismatch làm preflight fail và artifact ghi commit SHA/OS/browser/tool versions.
+
+BƯỚC 25 — BENCHMARK RUNNER
+Mục tiêu: tự động hóa việc chạy và tổng hợp experiment.
+Thực hiện: chạy production build, warm-up theo policy, 5 measured runs, giữ raw result và failures, tính median, tạo unique evidence directory; hỗ trợ baseline, optimized và compare commands.
+Hoàn thành khi: không chọn best run, không bỏ outlier âm thầm, không overwrite và dry-run/tests pass.
+
+BƯỚC 26 — LIGHTHOUSE COLLECTION
+Mục tiêu: thu lab web-performance metrics nhất quán.
+Thực hiện: lưu report từng iteration cho LCP, CLS, TBT, Speed Index, transfer và JS execution; dùng cùng config/cache; aggregate median.
+Hoàn thành khi: parser được test, report gốc còn nguyên và field INP vẫn unavailable nếu không có RUM.
+
+BƯỚC 27 — REGRESSION BUDGETS
+Mục tiêu: phát hiện optimized bị thụt lùi.
+Thực hiện: định nghĩa direction, unit và tolerance cho initial JS, long tasks, DOM nodes, search duration; reject missing hoặc incompatible evidence; ban đầu để command opt-in.
+Hoàn thành khi: tests bao phủ improvement, regression, missing data và environment mismatch.
+
+PHASE 8 — TRÌNH BÀY CASE STUDY
+
+BƯỚC 28 — EVIDENCE-DRIVEN CASE STUDY
+Mục tiêu: biến verified run records thành case study trực quan.
+Thực hiện: /case-study hiển thị purpose, approaches, environment, sample count, median, comparisons, evidence và limitations; chỉ render charts khi dữ liệu tương thích.
+Hoàn thành khi: không có số hard-code, unavailable state đúng, trang responsive/accessibility tốt và tests pass.
+
+BƯỚC 29 — AI-ASSISTANCE RECORDS
+Mục tiêu: thể hiện AI hỗ trợ điều tra nhưng con người quyết định bằng evidence.
+Thực hiện: lưu question, hypothesis, evidence, source, decision, accepted/rejected, reasoning, diff và measurements; validator không cho verified khi thiếu evidence.
+Hoàn thành khi: có template và workflow; case study chỉ hiển thị record thật đã verify.
+
+BƯỚC 30 — SEO VÀ ACCESSIBILITY — DEFERRED
+Mục tiêu: giữ nguyên SEO baseline để thực hiện experiment before/after riêng.
+Thực hiện: tạm thời skip SEO; giữ accessibility smoke checks cơ bản trong CI và final verification.
+Hoàn thành khi: README ghi SEO là deferred và các kết quả SEO chưa có vẫn unavailable.
+
+PHASE 9 — DELIVERY VÀ KIỂM TRA CUỐI
+
+BƯỚC 31 — CI
+Mục tiêu: bảo vệ correctness trên mỗi merge request.
+Thực hiện: CI chạy Yarn frozen install, lint, typecheck, unit, parity/E2E và build; full benchmarks chỉ manual/scheduled trên validated runner; giữ artifacts.
+Hoàn thành khi: pipeline reproducible, docs mô tả local reproduction và invalid benchmark environment không thể publish claim.
+
+BƯỚC 32 — FINAL VERIFICATION
+Mục tiêu: xác nhận core project sẵn sàng công bố trong khi SEO vẫn deferred.
+Thực hiện: audit git state, docs, scripts, routes, parity, experiments, evidence và case study; chạy toàn bộ correctness checks; chỉ sửa lỗi rõ ràng trong scope và không triển khai SEO.
+Hoàn thành khi: mọi measurement có evidence, missing và SEO data vẫn unavailable, README ghi rõ SEO deferred, build/tests pass và readiness report nêu passed checks, blockers, unverified metrics, next action.
+
+THỨ TỰ REVIEW KHUYẾN NGHỊ
+
+- Sau Bước 5: review component/UI states.
+- Sau Bước 7: review dashboard hoàn chỉnh lần đầu.
+- Sau Bước 13: review khác biệt full rendering và virtualization.
+- Sau Bước 19: review trải nghiệm tải assets.
+- Sau Bước 23: review memory evidence.
+- Sau Bước 28: review case study.
+- Sau Bước 32: chỉ publish những claim đã verified.
+
+QUY TẮC LÀM VIỆC VỚI CODEX
+
+Với mỗi bước, yêu cầu Codex kiểm tra git status và file liên quan trước khi sửa; bảo toàn thay đổi của người dùng; chỉ làm đúng scope; chạy lint, typecheck, test liên quan và production build; báo cáo file đã đổi, kết quả validation và limitations; không commit nếu chưa được yêu cầu; không tự tạo benchmark result.

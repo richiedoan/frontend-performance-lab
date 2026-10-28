@@ -1,0 +1,341 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Benchmark environment preflight artifact",
+  "$comment": "Structural schema; critical values are checked against profile.json by scripts/benchmark/environment.ts.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "profileId": {
+      "const": "mobile-cold-v1"
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "enum": ["passed", "failed"]
+    },
+    "observed": {
+      "type": "object",
+      "properties": {
+        "nodeVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "yarnVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "playwrightVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "browser": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "revision": {
+              "type": "string",
+              "minLength": 1
+            },
+            "distribution": {
+              "type": "string",
+              "minLength": 1
+            },
+            "executable": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "minLength": 1
+            },
+            "product": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "version",
+            "revision",
+            "distribution",
+            "executable",
+            "sha256",
+            "product"
+          ],
+          "additionalProperties": false
+        },
+        "viewport": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "deviceScaleFactor": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": ["width", "height", "deviceScaleFactor"],
+          "additionalProperties": false
+        },
+        "locale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timezoneId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "online": {
+          "type": "boolean"
+        },
+        "applied": {
+          "type": "object",
+          "properties": {
+            "cpuRate": {
+              "type": "number",
+              "minimum": 1
+            },
+            "network": {
+              "type": "object",
+              "properties": {
+                "offline": {
+                  "type": "boolean"
+                },
+                "latency": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "downloadThroughput": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uploadThroughput": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "offline",
+                "latency",
+                "downloadThroughput",
+                "uploadThroughput"
+              ],
+              "additionalProperties": false
+            },
+            "cacheDisabled": {
+              "type": "boolean"
+            },
+            "cacheCleared": {
+              "type": "boolean"
+            },
+            "freshContext": {
+              "type": "boolean"
+            },
+            "serviceWorkers": {
+              "type": "string",
+              "minLength": 1
+            },
+            "headless": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "cpuRate",
+            "network",
+            "cacheDisabled",
+            "cacheCleared",
+            "freshContext",
+            "serviceWorkers",
+            "headless"
+          ],
+          "additionalProperties": false
+        },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "cookies": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "origins": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": ["cookies", "origins"],
+          "additionalProperties": false
+        },
+        "dataset": {
+          "type": "object",
+          "properties": {
+            "seed": {
+              "type": "number"
+            },
+            "recordCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "generatorVersion": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sha256": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["seed", "recordCount", "generatorVersion", "sha256"],
+          "additionalProperties": false
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "commitSha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "dirty": {
+              "type": "boolean"
+            },
+            "status": {
+              "type": "string"
+            },
+            "patchSha256": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["commitSha", "dirty", "status", "patchSha256"],
+          "additionalProperties": false
+        },
+        "os": {
+          "type": "object",
+          "properties": {
+            "platform": {
+              "type": "string",
+              "minLength": 1
+            },
+            "release": {
+              "type": "string",
+              "minLength": 1
+            },
+            "arch": {
+              "type": "string",
+              "minLength": 1
+            },
+            "cpu": {
+              "type": "string",
+              "minLength": 1
+            },
+            "totalMemory": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": ["platform", "release", "arch", "cpu", "totalMemory"],
+          "additionalProperties": false
+        },
+        "plan": {
+          "type": "object",
+          "properties": {
+            "measuredIterations": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "warmupIterations": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cacheState": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": ["measuredIterations", "warmupIterations", "cacheState"],
+          "additionalProperties": false
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "profileId",
+    "recordedAt",
+    "status",
+    "observed",
+    "failures",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "observed": {
+            "required": [
+              "nodeVersion",
+              "yarnVersion",
+              "playwrightVersion",
+              "browser",
+              "viewport",
+              "locale",
+              "timezoneId",
+              "online",
+              "applied",
+              "storage",
+              "dataset",
+              "source",
+              "os",
+              "plan"
+            ]
+          },
+          "failures": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "failures": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

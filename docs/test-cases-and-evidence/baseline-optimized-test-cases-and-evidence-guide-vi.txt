@@ -1,0 +1,334 @@
+FRONTEND PERFORMANCE LAB
+TEST CASES VÀ HƯỚNG DẪN GHI EVIDENCE CHO BASELINE VS OPTIMIZED
+
+PHẠM VI
+
+Tài liệu này áp dụng cho các experiment từ Step 12 đến Step 23. Step 12 và 13 được xem là một comparison “large-list”. Mỗi comparison phải kiểm tra cả functional parity và performance/memory behavior.
+
+1. PROTOCOL CHUNG
+
+Điều kiện cố định:
+- Production build, không đo bằng development server.
+- Cùng commit cho hai route.
+- Chrome/version, OS, viewport, CPU/network throttling giống nhau.
+- Viewport mặc định 390x844.
+- Seed 20260911, 5.000 records, cùng cache policy.
+- Chạy baseline và optimized với cùng journey.
+- 1 warm-up không tính kết quả; sau đó 5 measured runs.
+- Lưu từng run; báo cáo median, không chọn run đẹp nhất.
+- Không loại outlier hoặc failed run mà không ghi lý do.
+- Không chạy song song hai benchmark.
+- Tắt extensions và workload nền không cần thiết.
+
+Trước mỗi experiment:
+1. yarn install --frozen-lockfile
+2. yarn lint
+3. yarn typecheck
+4. yarn test
+5. yarn build
+6. Ghi commit SHA, Node, Yarn, Chrome, OS và cấu hình máy vào environment.json.
+7. Chạy parity test trước performance test.
+
+Cấu trúc evidence:
+
+evidence/<experiment-id>/<run-id>/
+  prompt.md
+  output.md
+  diff.patch
+  tests.txt
+  environment.json
+  human-evaluation.md
+  baseline/
+    run-01.json ... run-05.json
+    trace-01.json ... trace-05.json
+    screenshot.png
+  optimized/
+    run-01.json ... run-05.json
+    trace-01.json ... trace-05.json
+    screenshot.png
+  summary.json
+
+Mỗi measured value trong run record phải có value, unit, sampleCount, aggregation="median" và evidence path. Metric chưa thu được phải là not-available kèm reason.
+
+2. LARGE-LIST — STEP 12 VÀ 13
+
+TC-LL-01 — Functional parity
+Precondition: scenario=large-list, seed=20260911, count=5000.
+Steps: mở route; search một keyword cố định; filter status/category; sort volume; mở record có ID cố định.
+Expected baseline/optimized: count logic, ordered IDs, detail data và visible state giống nhau.
+Evidence: tests.txt, parity-results.json, ảnh chụp hai route.
+
+TC-LL-02 — DOM population
+Steps: reload; chờ list stable; lấy tổng DOM nodes và số market-row elements.
+Expected baseline: gần/toàn bộ 5.000 rows trong DOM.
+Expected optimized: chỉ visible rows + bounded overscan.
+Evidence: dom-count-run-01..05.json và screenshot Elements/diagnostic panel.
+
+TC-LL-03 — Filter interaction
+Steps: record trace; click cùng filter; chờ kết quả stable; dừng trace.
+Metrics: interaction duration, scripting time, long-task count, max long task, DOM nodes.
+Evidence: trace-01..05.json, raw metrics và median summary.
+
+Record:
+- Chạy cùng script cho /baseline?scenario=large-list và /optimized?scenario=large-list.
+- Lưu trace từng run, không chỉ screenshot.
+- Ghi overscan và row height trong environment/scenario metadata.
+
+3. SEARCH INPUT — STEP 14
+
+TC-SI-01 — Final-result parity
+Steps: gõ cùng chuỗi ký tự với interval cố định; chờ stable.
+Expected: hai route cho cùng query cuối, count và ordered IDs.
+
+TC-SI-02 — Rapid typing
+Steps: gõ 8–12 ký tự với khoảng cách cố định, không pause.
+Expected baseline: calculation/request chạy theo từng keystroke theo design.
+Expected optimized: debounce gom work; obsolete request bị abort/discard; không có stale result.
+
+TC-SI-03 — Clear và retry
+Steps: gõ query, xóa nhanh, nhập query khác.
+Expected: UI cuối cùng luôn khớp query mới; AbortError không hiện như user error.
+
+Metrics: request count, calculation count, aborted/discarded count, input-to-stable-result duration, long tasks.
+Evidence: Playwright trace, request-events.json, performance trace, tests.txt, summary.json.
+Record: dùng cùng typing script và delay API; lưu exact query/timing vào scenario.json.
+
+4. WEB WORKER AGGREGATION — STEP 15
+
+TC-WA-01 — Result equivalence
+Steps: chạy direct aggregation và worker aggregation với cùng input.
+Expected: normalized outputs deep-equal; input không bị mutate.
+
+TC-WA-02 — Main-thread responsiveness
+Steps: record trace; trigger aggregation; ngay lập tức thực hiện một UI toggle/click.
+Expected baseline: CPU work xuất hiện trên main thread và có thể trì hoãn interaction.
+Expected optimized: aggregation ở worker thread; main thread vẫn xử lý UI.
+
+TC-WA-03 — Obsolete job
+Steps: gửi liên tiếp ba aggregation jobs với filters khác nhau.
+Expected: chỉ job mới nhất được apply; job cũ được đánh dấu discarded.
+
+TC-WA-04 — Cleanup
+Steps: bắt đầu job rồi unmount/navigate.
+Expected optimized: worker terminate; không update state sau unmount.
+
+Metrics: total job duration, main-thread blocking, long-task count, interaction duration, discarded jobs, worker overhead.
+Evidence: trace có worker track, aggregation-events.json, equivalence-test output, summary.
+Lưu ý: Worker có thể có total duration dài hơn nhưng responsiveness tốt hơn; phải báo cáo cả hai.
+
+5. RENDER BOUNDARIES — STEP 16
+
+TC-RB-01 — UI parity
+Steps: toggle filter panel 10 lần.
+Expected: visible behavior và records không đổi trên hai route.
+
+TC-RB-02 — Render propagation
+Steps: reset render counters sau initial mount; toggle một lần rồi 10 lần.
+Expected baseline: dashboard/table/chart/rows render lại theo vấn đề đã thiết kế.
+Expected optimized: chỉ toolbar/panel liên quan render; subtree không liên quan ổn định.
+
+TC-RB-03 — Prop stability
+Steps: trigger parent update không đổi table data.
+Expected optimized: table/rows được memoized không render lại ngoài dự kiến.
+
+Metrics: render count theo component, React commit count, actualDuration/baseDuration, interaction duration.
+Evidence: React Profiler export hoặc profiler-events.json, render-counts.json, tests.txt.
+Lưu ý: không dùng raw mount count trong React Strict Mode làm benchmark; đo production build hoặc delta sau reset.
+
+6. REQUEST LIFECYCLE — STEP 17
+
+TC-RL-01 — In-flight deduplication
+Steps: hai consumer gọi cùng request key đồng thời.
+Expected baseline: duplicate network calls.
+Expected optimized: một network call được chia sẻ.
+
+TC-RL-02 — Out-of-order response
+Steps: chọn Technology delay 900ms, Energy 600ms, Finance 200ms.
+Expected baseline: stale overwrite có thể tái hiện theo scenario.
+Expected optimized: Finance là state cuối; response cũ abort hoặc discard.
+
+TC-RL-03 — Cache TTL
+Steps: gọi cùng key hai lần trong TTL, rồi gọi sau TTL.
+Expected optimized: lần hai cache hit; sau expiry gọi network.
+
+TC-RL-04 — Cache bound
+Steps: tạo nhiều keys hơn max size.
+Expected optimized: cache không vượt giới hạn và eviction đúng policy.
+
+TC-RL-05 — Unmount
+Steps: navigate khi request pending.
+Expected optimized: abort; không state update sau unmount; không hiển thị AbortError cho người dùng.
+
+Metrics: network request count, bytes, abort/discard/cache-hit count, time-to-correct-state, cache entries.
+Evidence: HAR hoặc Playwright network log, request-events.json, cache-events.json, tests, trace.
+
+7. BUNDLE LOADING — STEP 18
+
+TC-BL-01 — Chart parity
+Steps: mở cùng record trên hai route.
+Expected: chart title, data points, tooltip và drawer behavior giống nhau.
+
+TC-BL-02 — Initial loading
+Steps: clear cache; reload; ghi network JS requests trước khi mở drawer.
+Expected baseline: chart library nằm trong initial dependency graph.
+Expected optimized: chart chunk chưa được request.
+
+TC-BL-03 — On-demand loading
+Steps: mở drawer lần đầu rồi lần hai.
+Expected optimized: chart chunk tải lần đầu; lần hai dùng browser cache; stable skeleton xuất hiện khi cần.
+
+TC-BL-04 — Chunk failure
+Steps: block/fail chart chunk trong test.
+Expected optimized: drawer có recoverable error state, dashboard không crash.
+
+Metrics: initial JS bytes, raw/gzip/Brotli size được ghi rõ, request count, parse/evaluation time, drawer-to-chart time.
+Evidence: build manifest, machine-readable bundle-report.json, network HAR, trace và screenshots.
+Không so raw size của một route với compressed size của route kia.
+
+8. IMAGE DELIVERY — STEP 19A
+
+TC-ID-01 — Visual/content parity
+Expected: cùng ảnh, alt purpose, final dimensions và content.
+
+TC-ID-02 — Initial requests
+Steps: cold reload, chưa scroll.
+Expected baseline: eager/oversized image behavior theo scenario.
+Expected optimized: chỉ above-fold images cần thiết tải; below-fold ảnh chưa priority.
+
+TC-ID-03 — Reserved dimensions
+Steps: throttle network; capture trước/trong/sau load.
+Expected optimized: row/hero space không collapse; không layout shift do ảnh.
+
+TC-ID-04 — Responsive selection
+Steps: chạy mobile và desktop viewport.
+Expected optimized: browser chọn candidate phù hợp; LCP image không lazy-load.
+
+Metrics: image request count, transfer/encoded/decoded size, discovery time, decode time, LCP phases, image-related layout shifts.
+Evidence: HAR, trace, Lighthouse report, Resource Timing JSON và ba screenshots.
+
+9. FONT LOADING — STEP 19B
+
+TC-FL-01 — Final typography parity
+Expected: cùng final font family, weights và layout intent.
+
+TC-FL-02 — Slow font load
+Steps: cold reload với throttling; quan sát fallback rồi custom font.
+Expected baseline: controlled shift có thể tái hiện.
+Expected optimized: fallback metrics/reserved layout giảm hoặc tránh shift.
+
+TC-FL-03 — Preload correctness
+Expected optimized: chỉ critical font/weight preload; không duplicate/unused preload.
+
+TC-FL-04 — Font failure
+Steps: block font file.
+Expected: nội dung vẫn đọc được và layout usable.
+
+Metrics: font request count/bytes, discovery/load time, font-related CLS entries.
+Evidence: HAR, trace, layout-shift-events.json, Lighthouse và screenshots.
+Không gộp result image/font trước khi hai sub-scenario có evidence riêng.
+
+10. INTERVAL MEMORY LEAK — STEP 20
+
+TC-IM-01 — Timer lifecycle
+Steps: mount/unmount component 10 lần bằng fake timers.
+Expected baseline: active timer/work tăng.
+Expected optimized: trở về timer count ban đầu.
+
+TC-IM-02 — Navigation
+Steps: navigate vào/ra scenario 10 lần; chờ cùng thời gian.
+Expected baseline: interval callbacks tiếp tục sau unmount.
+Expected optimized: không callback sau cleanup.
+
+Metrics: active timers, callback count after unmount, heap-after-GC trend.
+Evidence: unit-test output, timer-events.json, heap snapshots/allocation recording nếu thu được.
+
+11. EVENT LISTENER LEAK — STEP 21
+
+TC-EL-01 — Listener accumulation
+Steps: mount/unmount 10 lần; dispatch event một lần.
+Expected baseline: handler chạy nhiều lần.
+Expected optimized: chỉ active component handler chạy.
+
+TC-EL-02 — Retainer inspection
+Steps: tạo cycles; forced GC; inspect handler/component retainers.
+Expected: baseline có retained handlers/data; optimized cleanup.
+
+Metrics: handler invocation count, retained listener/reference count, heap trend.
+Evidence: listener-events.json, tests, heap snapshot và DevTools screenshot có node/retainer được đánh dấu.
+
+12. DETACHED DOM LEAK — STEP 22
+
+TC-DD-01 — Drawer cycles
+Steps: mở/đóng drawer 10 lần.
+Expected baseline: detached nodes/references tích lũy.
+Expected optimized: nodes có thể được GC; retained cache vẫn bounded.
+
+TC-DD-02 — Functional parity
+Expected: drawer content/focus behavior không đổi dù implementation cleanup khác nhau.
+
+Metrics: detached element count, DOM nodes after GC, retained size, cache size.
+Evidence: Detached Elements profile, heap snapshots trước/sau, retained-reference instrumentation và tests.
+Phải inspect retainer path; DOM node count đơn lẻ chưa đủ kết luận leak.
+
+13. COMBINED MEMORY JOURNEY — STEP 23
+
+TC-MJ-01 — Ten-cycle trend
+Steps mỗi cycle: Dashboard → Detail → Dashboard → chờ cleanup → forced GC → sample.
+Expected baseline: scenario leak tạo xu hướng tăng có thể giải thích bằng retainer.
+Expected optimized: quay về vùng ổn định trong tolerance đã document.
+
+TC-MJ-02 — Repeatability
+Steps: chạy hai batch độc lập, mỗi batch cùng cấu hình.
+Expected: xu hướng không phụ thuộc một run duy nhất.
+
+Metrics mỗi cycle: usedJSHeapSize, DOM nodes, detached nodes nếu hỗ trợ, listener/timer/cache count.
+Evidence: memory-series.json, heap snapshots tại cycle 0/5/10, browser launch args, trace và median/trend summary.
+Không kết luận leak chỉ vì heap cuối lớn hơn heap đầu; cần forced GC, repeatability và retainer evidence.
+
+14. HUMAN EVALUATION
+
+Mỗi comparison có human-evaluation.md:
+- Journey có giống specification không?
+- Hai route có cùng final UI/data không?
+- Có lỗi, flicker hoặc interaction bất thường không?
+- Measurement có bị nhiễu không?
+- Claim nào được evidence hỗ trợ?
+- Claim nào phải để unavailable?
+- Trade-off nào xuất hiện, ví dụ lazy chunk làm lần mở drawer đầu chậm hơn?
+- Kết luận accept/reject optimization và lý do.
+
+15. SUMMARY.JSON TỐI THIỂU
+
+{
+  "experimentId": "<id>",
+  "commit": "<sha>",
+  "environmentRef": "environment.json",
+  "iterations": 5,
+  "aggregation": "median",
+  "baseline": {
+    "<metric>": {
+      "value": 0,
+      "unit": "<unit>",
+      "evidence": "baseline/run-01.json"
+    }
+  },
+  "optimized": {},
+  "parity": {
+    "status": "passed",
+    "evidence": "tests.txt"
+  },
+  "limitations": []
+}
+
+16. CHECKLIST TRƯỚC KHI CẬP NHẬT RUN RECORD
+
+- Đúng experiment, scenario, commit và môi trường.
+- Đủ 5 measured runs hoặc ghi rõ run nào fail.
+- Raw evidence tồn tại và đọc được.
+- Metric có cùng definition/unit ở baseline và optimized.
+- Median được tính từ raw values.
+- Functional parity pass.
+- Không dùng screenshot thay raw trace/JSON.
+- Không gọi lab interaction metric là INP.
+- Không sửa run khác.
+- Chạy experiment validator sau khi cập nhật.

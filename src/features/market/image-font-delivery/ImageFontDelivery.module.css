@@ -1,0 +1,39 @@
+@font-face {
+  font-family: DeliverySwap;
+  src: url('/delivery/geist-latin.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: DeliveryStable;
+  src: url('/delivery/geist-latin.woff2') format('woff2');
+  font-display: optional;
+}
+.baseline {
+  font-family: DeliverySwap, Georgia, serif;
+}
+.optimized {
+  font-family: DeliveryStable, Arial, sans-serif;
+}
+.panel {
+  max-width: 80rem;
+  line-height: 1.5;
+}
+.figure {
+  margin: 1rem 0 2rem;
+}
+.frame {
+  width: 100%;
+  background: #e1d9c9;
+  overflow: hidden;
+}
+.reserved {
+  aspect-ratio: 16 / 9;
+}
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.caption {
+  min-height: 3rem;
+}

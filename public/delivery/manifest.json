@@ -1,0 +1,153 @@
+{
+  "generator": "scripts/delivery/generate.mjs",
+  "sharp": "0.35.4",
+  "assets": [
+    {
+      "file": "scene-1-2400.jpg",
+      "width": 2400,
+      "height": 1350,
+      "bytes": 104322,
+      "sha256": "00a4153b66f151d4f8faf52ed2455dbc0dc25b8000729fd9c06ea6b52c4fa603"
+    },
+    {
+      "file": "scene-1-480.webp",
+      "width": 480,
+      "height": 270,
+      "bytes": 3662,
+      "sha256": "541bde41a2fb338e86c28449e246dde46e77965ebaff717d9e9f8c43ac14e746"
+    },
+    {
+      "file": "scene-1-960.webp",
+      "width": 960,
+      "height": 540,
+      "bytes": 7266,
+      "sha256": "8ea48076ae94c00415e70446dc71b8cc3eff88ed1dfe0cdc4b31c01c48efe00f"
+    },
+    {
+      "file": "scene-1-1280.webp",
+      "width": 1280,
+      "height": 720,
+      "bytes": 9468,
+      "sha256": "f72dfef59608d851b6282798ffefb57c6556ff346021ce7f4d0c7965493c42d1"
+    },
+    {
+      "file": "scene-1-480.avif",
+      "width": 480,
+      "height": 270,
+      "bytes": 3563,
+      "sha256": "9cb4b9ad1286de94c234e594b853c31cffaa6f108cf17d219fbf622a8ca1b364"
+    },
+    {
+      "file": "scene-1-960.avif",
+      "width": 960,
+      "height": 540,
+      "bytes": 6444,
+      "sha256": "b3bb0e2f86310a5d153c3ff2d59ad7e56c36ca6a045c836db3c71a064acef61b"
+    },
+    {
+      "file": "scene-1-1280.avif",
+      "width": 1280,
+      "height": 720,
+      "bytes": 7570,
+      "sha256": "6469f28fa3656ead28dd4ce44514d35d26bbd65ac1c3464ba0d0cc7c337ea1c1"
+    },
+    {
+      "file": "scene-2-2400.jpg",
+      "width": 2400,
+      "height": 1350,
+      "bytes": 106372,
+      "sha256": "c2bc3f77e8df01723ec664d41296c993c1656b515ecc8d32d2664b57c577992b"
+    },
+    {
+      "file": "scene-2-480.webp",
+      "width": 480,
+      "height": 270,
+      "bytes": 3648,
+      "sha256": "93aaa197d65f09ccc858023ff660876b525bb65c1ff792af0396e1513cfa2b7f"
+    },
+    {
+      "file": "scene-2-960.webp",
+      "width": 960,
+      "height": 540,
+      "bytes": 7326,
+      "sha256": "495061e7e551114a54ca5cf1951850a1f14e007e030de67d25e5ec850793c806"
+    },
+    {
+      "file": "scene-2-1280.webp",
+      "width": 1280,
+      "height": 720,
+      "bytes": 9468,
+      "sha256": "08a714e92895cc830cc3ded9601f70789d70a89ec2d9d051e506129475b79f51"
+    },
+    {
+      "file": "scene-2-480.avif",
+      "width": 480,
+      "height": 270,
+      "bytes": 3605,
+      "sha256": "e9925ee9b878f244e8133b4e3914d08dac005d9ef7a8fcb51c297f2d69ba5515"
+    },
+    {
+      "file": "scene-2-960.avif",
+      "width": 960,
+      "height": 540,
+      "bytes": 6518,
+      "sha256": "7e45fe29c0fd4e8fc1df8e5195c8c20a47626681203f973bf89a8ab3ebe95d2a"
+    },
+    {
+      "file": "scene-2-1280.avif",
+      "width": 1280,
+      "height": 720,
+      "bytes": 7804,
+      "sha256": "fe9e9cba55e691a3c64aa31d27043bcc706035cc4ed7ee3a4a282930f0bdb0a3"
+    },
+    {
+      "file": "scene-3-2400.jpg",
+      "width": 2400,
+      "height": 1350,
+      "bytes": 105567,
+      "sha256": "7ea34251c424cb3eacff4c0a9fca9961143a18e20473a7daed56e4908c06eaab"
+    },
+    {
+      "file": "scene-3-480.webp",
+      "width": 480,
+      "height": 270,
+      "bytes": 3644,
+      "sha256": "9e6b881b3c5d21d1173db991ea40a954b91ac3b60dc80d35d2ff232fcd6b7cfc"
+    },
+    {
+      "file": "scene-3-960.webp",
+      "width": 960,
+      "height": 540,
+      "bytes": 7232,
+      "sha256": "33938560137c62844e75c76f7b2c791aee604d302ffa4b3aec3eac0184f2432e"
+    },
+    {
+      "file": "scene-3-1280.webp",
+      "width": 1280,
+      "height": 720,
+      "bytes": 9494,
+      "sha256": "727fee099ba64ebfecae1461c3b8261f73f172ff9e35810f481e69fbfaaaf5f0"
+    },
+    {
+      "file": "scene-3-480.avif",
+      "width": 480,
+      "height": 270,
+      "bytes": 3586,
+      "sha256": "30e54811bf5fe84144bfc1f67fcb0a745c9d8b1c07e55b008651b2d32911a964"
+    },
+    {
+      "file": "scene-3-960.avif",
+      "width": 960,
+      "height": 540,
+      "bytes": 6502,
+      "sha256": "229138c01f993ddde7daf94fb97304688f76c7c943587d1191a6a57eba4367b8"
+    },
+    {
+      "file": "scene-3-1280.avif",
+      "width": 1280,
+      "height": 720,
+      "bytes": 7802,
+      "sha256": "0b71959a82ec9ae6e991ef3d04c9b3da332bee0db2b71c30fb3a1a93fd2f4d90"
+    }
+  ]
+}

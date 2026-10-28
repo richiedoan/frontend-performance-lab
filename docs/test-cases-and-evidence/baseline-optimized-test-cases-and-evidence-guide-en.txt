@@ -1,0 +1,328 @@
+FRONTEND PERFORMANCE LAB
+BASELINE VS OPTIMIZED TEST CASES AND EVIDENCE RECORDING GUIDE
+
+SCOPE
+
+This guide covers comparison experiments from Step 12 through Step 23. Steps 12 and 13 form one large-list comparison. Every comparison must verify both functional parity and performance or memory behavior.
+
+1. SHARED PROTOCOL
+
+Fixed conditions:
+- Measure a production build, never the development server.
+- Use the same commit, Chrome version, OS, viewport and CPU/network throttling.
+- Default viewport: 390x844; dataset: 5,000 records; seed: 20260911.
+- Apply the same cache policy and user journey to both routes.
+- Perform one unmeasured warm-up followed by five measured runs.
+- Preserve every run and report the median; never select the best result.
+- Never silently remove an outlier or failed run.
+- Do not run baseline and optimized benchmarks concurrently.
+- Disable extensions and unnecessary background workloads.
+
+Before each experiment:
+1. yarn install --frozen-lockfile
+2. yarn lint
+3. yarn typecheck
+4. yarn test
+5. yarn build
+6. Record commit SHA, Node, Yarn, Chrome, OS and machine settings in environment.json.
+7. Run parity tests before performance tests.
+
+Evidence structure:
+
+evidence/<experiment-id>/<run-id>/
+  prompt.md
+  output.md
+  diff.patch
+  tests.txt
+  environment.json
+  human-evaluation.md
+  baseline/
+    run-01.json ... run-05.json
+    trace-01.json ... trace-05.json
+    screenshot.png
+  optimized/
+    run-01.json ... run-05.json
+    trace-01.json ... trace-05.json
+    screenshot.png
+  summary.json
+
+Every measured value must include value, unit, sampleCount, aggregation="median" and an evidence path. Unsupported metrics remain not-available with a reason.
+
+2. LARGE LIST — STEPS 12 AND 13
+
+TC-LL-01 — Functional parity
+Precondition: scenario=large-list, seed=20260911, count=5000.
+Steps: open the route; search a fixed term; filter status/category; sort by volume; open a fixed record ID.
+Expected on both routes: identical logical count, ordered IDs, detail data and visible state.
+Evidence: tests.txt, parity-results.json and screenshots of both routes.
+
+TC-LL-02 — DOM population
+Steps: reload; wait for a stable list; collect total DOM nodes and market-row element count.
+Expected baseline: approximately/all 5,000 rows exist in the DOM.
+Expected optimized: only visible rows plus bounded overscan exist.
+Evidence: dom-count-run-01..05.json and an Elements/diagnostic screenshot.
+
+TC-LL-03 — Filter interaction
+Steps: start a trace; click the same filter; wait for stable results; stop the trace.
+Metrics: interaction duration, scripting time, long-task count, longest task and DOM nodes.
+Evidence: trace-01..05.json, raw metrics and median summary.
+Recording note: run the same script against both routes and store overscan and row height in scenario metadata.
+
+3. SEARCH INPUT — STEP 14
+
+TC-SI-01 — Final-result parity
+Steps: type the same string at a fixed interval and wait for stability.
+Expected: identical final query, result count and ordered IDs.
+
+TC-SI-02 — Rapid typing
+Steps: type 8–12 characters with a fixed interval and no pause.
+Expected baseline: calculation/request work runs per keystroke as designed.
+Expected optimized: debounce combines work; obsolete requests are aborted/discarded; no stale result appears.
+
+TC-SI-03 — Clear and retry
+Steps: enter a query, clear it quickly and enter another.
+Expected: final UI always matches the latest query; AbortError is not shown as a user-facing failure.
+
+Metrics: request count, calculation count, aborted/discarded count, input-to-stable-result duration and long tasks.
+Evidence: Playwright trace, request-events.json, performance trace, tests.txt and summary.json.
+Recording note: use the same typing script/API delay and store exact input timing in scenario.json.
+
+4. WEB WORKER AGGREGATION — STEP 15
+
+TC-WA-01 — Result equivalence
+Steps: run direct and Worker aggregation with identical input.
+Expected: normalized outputs deep-equal and input remains unmodified.
+
+TC-WA-02 — Main-thread responsiveness
+Steps: start a trace; trigger aggregation; immediately perform a UI click/toggle.
+Expected baseline: CPU work appears on the main thread and may delay interaction.
+Expected optimized: aggregation runs on a Worker track and the main thread remains responsive.
+
+TC-WA-03 — Obsolete job
+Steps: submit three jobs rapidly with different filters.
+Expected: only the newest job is applied; older jobs are marked discarded.
+
+TC-WA-04 — Cleanup
+Steps: start a job and navigate/unmount.
+Expected optimized: Worker terminates and no state update occurs after unmount.
+
+Metrics: total job duration, main-thread blocking, long-task count, interaction duration, discarded jobs and Worker overhead.
+Evidence: trace including Worker track, aggregation-events.json, equivalence-test output and summary.
+Report both total duration and responsiveness; a Worker may take longer overall while protecting the main thread.
+
+5. RENDER BOUNDARIES — STEP 16
+
+TC-RB-01 — UI parity
+Steps: toggle the filter panel ten times.
+Expected: identical visible behavior; market data remains unchanged.
+
+TC-RB-02 — Render propagation
+Steps: reset render counters after initial mount; toggle once and then ten times.
+Expected baseline: dashboard/table/chart/rows re-render according to the controlled problem.
+Expected optimized: only the relevant toolbar/panel renders; unrelated subtrees remain stable.
+
+TC-RB-03 — Prop stability
+Steps: trigger a parent update that does not change table data.
+Expected optimized: memoized table/rows do not render unnecessarily.
+
+Metrics: per-component render count, React commit count, actualDuration/baseDuration and interaction duration.
+Evidence: React Profiler export or profiler-events.json, render-counts.json and tests.txt.
+Do not use Strict Mode raw mount counts as benchmark evidence; use production or deltas after reset.
+
+6. REQUEST LIFECYCLE — STEP 17
+
+TC-RL-01 — In-flight deduplication
+Steps: two consumers request the same key concurrently.
+Expected baseline: duplicate network calls.
+Expected optimized: one shared network call.
+
+TC-RL-02 — Out-of-order response
+Steps: select Technology with 900ms delay, Energy with 600ms, then Finance with 200ms.
+Expected baseline: the controlled stale overwrite can reproduce.
+Expected optimized: Finance remains final; older responses are aborted or discarded.
+
+TC-RL-03 — Cache TTL
+Steps: request the same key twice within TTL, then again after expiry.
+Expected optimized: second call is a cache hit; post-expiry call reaches the network.
+
+TC-RL-04 — Cache bound
+Steps: create more keys than the configured maximum.
+Expected optimized: cache stays within the limit and follows the documented eviction policy.
+
+TC-RL-05 — Unmount
+Steps: navigate while a request is pending.
+Expected optimized: request aborts, no post-unmount update occurs and AbortError is not shown to the user.
+
+Metrics: request count, transferred bytes, abort/discard/cache-hit counts, time-to-correct-state and cache entries.
+Evidence: HAR or Playwright network log, request-events.json, cache-events.json, tests and trace.
+
+7. BUNDLE LOADING — STEP 18
+
+TC-BL-01 — Chart parity
+Steps: open the same record on both routes.
+Expected: identical title, data points, tooltip and drawer behavior.
+
+TC-BL-02 — Initial loading
+Steps: clear cache; reload; record JS requests before opening the drawer.
+Expected baseline: chart library is in the initial dependency graph.
+Expected optimized: chart chunk has not been requested.
+
+TC-BL-03 — On-demand loading
+Steps: open the drawer for the first and second time.
+Expected optimized: chart chunk loads on first open and uses browser cache later; stable skeleton appears when needed.
+
+TC-BL-04 — Chunk failure
+Steps: block/fail the chart chunk in a test.
+Expected optimized: drawer displays a recoverable error and the dashboard does not crash.
+
+Metrics: initial JS bytes, clearly labeled raw/gzip/Brotli sizes, request count, parse/evaluation time and drawer-to-chart time.
+Evidence: build manifest, machine-readable bundle-report.json, network HAR, trace and screenshots.
+Never compare raw size for one route with compressed size for the other.
+
+8. IMAGE DELIVERY — STEP 19A
+
+TC-ID-01 — Visual/content parity
+Expected: identical image content, alt purpose, final dimensions and surrounding content.
+
+TC-ID-02 — Initial requests
+Steps: cold reload without scrolling.
+Expected baseline: controlled eager/oversized-image behavior.
+Expected optimized: only necessary above-fold images load; below-fold assets receive no priority.
+
+TC-ID-03 — Reserved dimensions
+Steps: throttle network; capture before, during and after loading.
+Expected optimized: row/hero space does not collapse; images cause no layout shift.
+
+TC-ID-04 — Responsive selection
+Steps: run mobile and desktop viewports.
+Expected optimized: browser selects an appropriate candidate and the LCP image is not lazy-loaded.
+
+Metrics: image requests, transfer/encoded/decoded sizes, discovery/decode time, LCP phases and image-related layout shifts.
+Evidence: HAR, trace, Lighthouse report, Resource Timing JSON and three screenshots.
+
+9. FONT LOADING — STEP 19B
+
+TC-FL-01 — Final typography parity
+Expected: identical final family, weights and layout intent.
+
+TC-FL-02 — Slow font loading
+Steps: cold reload under throttling; observe fallback followed by the custom font.
+Expected baseline: controlled shift is reproducible.
+Expected optimized: compatible fallback metrics/reserved layout reduce or prevent shift.
+
+TC-FL-03 — Preload correctness
+Expected optimized: only critical fonts/weights preload; no duplicate or unused preload.
+
+TC-FL-04 — Font failure
+Steps: block the font file.
+Expected: content remains readable and layout usable.
+
+Metrics: font request count/bytes, discovery/load time and font-related CLS entries.
+Evidence: HAR, trace, layout-shift-events.json, Lighthouse and screenshots.
+Do not combine image/font conclusions before both sub-scenarios have independent evidence.
+
+10. INTERVAL MEMORY LEAK — STEP 20
+
+TC-IM-01 — Timer lifecycle
+Steps: mount/unmount ten times with fake timers.
+Expected baseline: active timers/work increase.
+Expected optimized: timer count returns to the starting value.
+
+TC-IM-02 — Navigation
+Steps: navigate into/out of the scenario ten times and wait for the same duration.
+Expected baseline: callbacks continue after unmount.
+Expected optimized: no callbacks occur after cleanup.
+
+Metrics: active timers, post-unmount callbacks and heap-after-GC trend.
+Evidence: unit-test output, timer-events.json and heap/allocation artifacts when available.
+
+11. EVENT-LISTENER MEMORY LEAK — STEP 21
+
+TC-EL-01 — Listener accumulation
+Steps: mount/unmount ten times, then dispatch one event.
+Expected baseline: handler executes multiple times.
+Expected optimized: only the active component’s handler executes.
+
+TC-EL-02 — Retainer inspection
+Steps: create cycles, force GC and inspect handler/component retainers.
+Expected: baseline retains handlers/data; optimized cleans them up.
+
+Metrics: handler invocations, retained listeners/references and heap trend.
+Evidence: listener-events.json, tests, heap snapshot and an annotated DevTools retainer screenshot.
+
+12. DETACHED DOM MEMORY LEAK — STEP 22
+
+TC-DD-01 — Drawer cycles
+Steps: open and close the drawer ten times.
+Expected baseline: detached nodes/references accumulate.
+Expected optimized: nodes become collectible and retained cache remains bounded.
+
+TC-DD-02 — Functional parity
+Expected: drawer content and focus behavior remain identical.
+
+Metrics: detached elements, DOM nodes after GC, retained size and cache size.
+Evidence: Detached Elements profile, before/after heap snapshots, retained-reference instrumentation and tests.
+A DOM-node count alone is insufficient; inspect the retainer path.
+
+13. COMBINED MEMORY JOURNEY — STEP 23
+
+TC-MJ-01 — Ten-cycle trend
+Each cycle: Dashboard → Detail → Dashboard → wait for cleanup → force GC → sample.
+Expected baseline: the leak scenario produces an explainable upward trend.
+Expected optimized: values return to a stable band within documented tolerance.
+
+TC-MJ-02 — Repeatability
+Steps: execute two independent batches under identical settings.
+Expected: the trend does not depend on a single run.
+
+Per-cycle metrics: usedJSHeapSize, DOM nodes, detached nodes when supported, and listener/timer/cache counts.
+Evidence: memory-series.json, heap snapshots at cycles 0/5/10, browser launch arguments, trace and trend summary.
+Do not call a larger final heap a leak without forced GC, repeatability and retainer evidence.
+
+14. HUMAN EVALUATION
+
+Every comparison requires human-evaluation.md answering:
+- Did the journey match the specification?
+- Did both routes reach the same final UI/data?
+- Was there an error, flicker or abnormal interaction?
+- Was the measurement contaminated?
+- Which claims are supported by evidence?
+- Which claims must remain unavailable?
+- What trade-off appeared, such as slower first drawer open after lazy loading?
+- Was the optimization accepted or rejected, and why?
+
+15. MINIMUM SUMMARY.JSON
+
+{
+  "experimentId": "<id>",
+  "commit": "<sha>",
+  "environmentRef": "environment.json",
+  "iterations": 5,
+  "aggregation": "median",
+  "baseline": {
+    "<metric>": {
+      "value": 0,
+      "unit": "<unit>",
+      "evidence": "baseline/run-01.json"
+    }
+  },
+  "optimized": {},
+  "parity": {
+    "status": "passed",
+    "evidence": "tests.txt"
+  },
+  "limitations": []
+}
+
+16. CHECKLIST BEFORE UPDATING A RUN RECORD
+
+- Experiment, scenario, commit and environment match.
+- Five measured runs exist, or each failed run is explicitly recorded.
+- Raw evidence exists and is readable.
+- Baseline and optimized use the same metric definition and unit.
+- Median is calculated from raw values.
+- Functional parity passes.
+- Screenshots do not replace raw traces or JSON.
+- No lab interaction metric is called INP.
+- No unrelated run is modified.
+- The experiment validator passes after the update.
